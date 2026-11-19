@@ -1,0 +1,47 @@
+# --- OS / éditeurs ---
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# --- Secrets et environnements locaux ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+secrets/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Flutter / Dart ---
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
+*.g.dart.bak
+
+# --- Android ---
+android/.gradle/
+android/local.properties
+android/key.properties
+android/app/upload-keystore.*
+android/app/google-services.json
+
+# --- iOS ---
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Generated.xcconfig
+ios/Runner/GoogleService-Info.plist
+**/xcuserdata/

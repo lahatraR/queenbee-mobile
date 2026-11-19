@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop, preprod, main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect project
+        id: detect
+        run: |
+          if [ -f pubspec.yaml ]; then echo "found=true" >> "$GITHUB_OUTPUT"; else echo "found=false" >> "$GITHUB_OUTPUT"; fi
+      - name: Skip until the Flutter project exists
+        if: steps.detect.outputs.found == 'false'
+        run: echo "::notice::No pubspec.yaml yet (Trello QB-013). Build skipped."
+      - uses: subosito/flutter-action@v2
+        if: steps.detect.outputs.found == 'true'
+        with:
+          channel: stable
+          cache: true
+      - name: Install
+        if: steps.detect.outputs.found == 'true'
+        run: flutter pub get
+      - name: Format
+        if: steps.detect.outputs.found == 'true'
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Analyze
+        if: steps.detect.outputs.found == 'true'
+        run: flutter analyze
+      - name: Test
+        if: steps.detect.outputs.found == 'true'
+        run: flutter test

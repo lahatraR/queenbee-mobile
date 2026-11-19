@@ -1,0 +1,39 @@
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [develop, preprod, main]
+  schedule:
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  snyk:
+    name: Snyk scan
+    runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip when Snyk is not configured yet
+        if: env.SNYK_TOKEN == ''
+        run: echo "::notice::SNYK_TOKEN is not set yet (Trello QB-033). Snyk scan skipped."
+      - uses: snyk/actions/setup@master
+        if: env.SNYK_TOKEN != ''
+      - name: Scan dependencies
+        if: env.SNYK_TOKEN != ''
+        run: snyk test --all-projects --severity-threshold=high

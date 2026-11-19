@@ -1,0 +1,47 @@
+name: PR conventions
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  conventions:
+    name: Branch and title policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch flow, branch name and PR title
+        env:
+          HEAD: ${{ github.head_ref }}
+          BASE: ${{ github.base_ref }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+
+          work='^(feature|bugfix|refactor|docs|test|ci|chore|perf)/(QB-[0-9]{3}|R-[0-9]{2})-[a-z0-9]+(-[a-z0-9]+)*$'
+          hotfix='^hotfix/(QB-[0-9]{3}|R-[0-9]{2})-[a-z0-9]+(-[a-z0-9]+)*$'
+          bot='^dependabot/'
+
+          echo "PR: $HEAD -> $BASE"
+          case "$BASE" in
+            main)
+              [[ "$HEAD" == "preprod" || "$HEAD" =~ $hotfix ]] \
+                || fail "main only accepts PRs from 'preprod' or 'hotfix/*' (got '$HEAD'). See CONTRIBUTING.md §1." ;;
+            preprod)
+              [[ "$HEAD" == "develop" || "$HEAD" == "main" || "$HEAD" =~ $hotfix ]] \
+                || fail "preprod only accepts PRs from 'develop', 'main' or 'hotfix/*' (got '$HEAD'). See CONTRIBUTING.md §1." ;;
+            develop)
+              [[ "$HEAD" =~ $work || "$HEAD" =~ $bot || "$HEAD" == "main" || "$HEAD" == "preprod" ]] \
+                || fail "Branch '$HEAD' does not follow '<type>/<card>-<short-description>', e.g. feature/QB-019-login-jwt. See CONTRIBUTING.md §2." ;;
+            *)
+              fail "PRs must target develop, preprod or main (got '$BASE')." ;;
+          esac
+
+          title='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9-]+\))?!?: .{1,72}$'
+          [[ "$TITLE" =~ $title ]] \
+            || fail "PR title must follow Conventional Commits, e.g. 'feat(auth): add JWT refresh token'. See CONTRIBUTING.md §3."
+
+          echo "All conventions respected."
